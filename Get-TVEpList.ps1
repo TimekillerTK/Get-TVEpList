@@ -29,7 +29,7 @@ function Get-TVEpList {
     This example uses a custom regex instead of the default "Season "
 
     .EXAMPLE
-    Get-TVEpList -URI https://www.themoviedb.org/tv/314-star-trek-enterprise/season/1 -RemoveIllegalChars $true
+    Get-TVEpList -URI https://www.themoviedb.org/tv/314-star-trek-enterprise/season/1 -RemoveIllegalChar
 
     Will automatically remove NTFS illegal characters from the episode titles: / ? < > \ : * | "
 
@@ -49,54 +49,73 @@ function Get-TVEpList {
     param (
 
         [Parameter(Mandatory)]
-        [string]$URI,
+        [string[]]$URIs,
 
         [Parameter()]
         [string]$Regex = "Season ",
 
         [Parameter()]
-        [bool]$RemoveIllegalChar = $false
+        [switch]$RemoveIllegalChar
     )
     PROCESS {
-
-        # Web scrape for URI
-        $fetch = Invoke-WebRequest -Uri $URI
-
-        # Selects the relevant links, obviously works only with TV shows, not movies
-        $rawtitles = (($fetch.links).title | Where-Object { $_ -match $Regex }) | Select-Object -Unique
 
         # Create an empty arraylist object
         $arraylist = New-Object -TypeName "System.Collections.ArrayList"
         $arraylist.Clear()
-
-        # Template for ConvertFrom-String, doesn't work perfectly in all cases, needs to be looked at.
-        $template = ("{ShowTitle*:Example Title}: Season {[int]Season:1} ({[int]Date:1988}): Episode {[int]Episode:1} - {EpTitle:Spaghetti Code?}`r`n" +
-                    "{ShowTitle*:Another Example Title}: Season {[int]Season:17} ({[int]Date:2004}): Episode {[int]Episode:42} - {EpTitle:Wonderful, Spices!!!}`r`n" +
-                    "{ShowTitle*:SomeThing}: Season {[int]Season:47} ({[int]Date:1950}): Episode {[int]Episode:142} - {EpTitle:nothing}")
-
-        foreach($item in $rawtitles) {
             
-            # converts the object 
-            $temp = $item | ConvertFrom-String -TemplateContent $template
+        foreach ($URI in $URIs) {
+            
+            # Web scrape for URI
+            $fetch = Invoke-WebRequest -Uri $URI
+    
+            # Selects the relevant links, obviously works only with TV shows, not movies
+            $rawtitles = (($fetch.links).title | Where-Object { $_ -match $Regex }) | Select-Object -Unique
+    
 
-            If($RemoveIllegalChar -eq $true) {
+            # Template for ConvertFrom-String, doesn't work perfectly in all cases, needs to be looked at.
+            $template = ("{ShowTitle*:Example Title}: Season {[int]Season:1} ({[int]Date:1988}): Episode {[int]Episode:1} - {EpTitle:Spaghetti Code?}`r`n" +
+                        "{ShowTitle*:Another Example Title}: Season {[int]Season:17} ({[int]Date:2004}): Episode {[int]Episode:42} - {EpTitle:Wonderful, Spices!!!}`r`n" +
+                        "{ShowTitle*:SomeThing}: Season {[int]Season:47} ({[int]Date:1950}): Episode {[int]Episode:142} - {EpTitle:nothing}")
+    
+            foreach($item in $rawtitles) {
                 
-                # NTFS illegal characters for filenames, regex format
-                $illegalchar = "\'", "\""", "\/", "\?", "\<", "\>", "\\", "\:", "\*", "\|" 
+                # converts the object 
+                $temp = $item | ConvertFrom-String -TemplateContent $template
+    
+                If($PSBoundParameters.ContainsKey('RemoveIllegalChar')) {
+                    
+                    # NTFS illegal characters for filenames, regex format
+                    $illegalchar = "\'", "\""", "\/", "\?", "\<", "\>", "\\", "\:", "\*", "\|" 
+    
+                    # Loop that goes over each illegal character
+                    foreach ($item in $illegalchar) {
+                        $temp.EpTitle = $temp.EpTitle -replace $item,""            
+                    } #foreach
+                } #if
+                
+                # add an object to the arraylist
+                $arraylist.Add($temp) | Out-Null
+    
+            } #foreach
 
-                # Loop that goes over each illegal character
-                foreach ($item in $illegalchar) {
-                    $temp.EpTitle = $temp.EpTitle -replace $item,""            
-                }
-            }
-            
-            # add an object to the arraylist
-            $arraylist.Add($temp) | Out-Null
-
-        }
+        } #foreach
 
         # Return the result
         return $arraylist
 
-    }
-}
+    } #process
+} #function
+
+
+<#
+Testing section for supporting search by title:
+
+$URI = "https://www.themoviedb.org/search?query=my%20hero%20academia"
+
+# Web scrape for URI
+$fetch = Invoke-WebRequest -Uri $URI
+  
+$showlink = $fetch.links | Where-Object { $_ -like '*title="TV Shows"*' }
+
+$realfetch = Invoke-WebRequest -Uri "https://www.themoviedb.org$($showlink.href)"
+#>
