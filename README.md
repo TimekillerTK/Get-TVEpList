@@ -13,3 +13,4 @@ Run `Get-TVEpList -URI https://www.themoviedb.org/tv/####/season/##`
 - Currently only works on TV shows, should work on movies as well
 - ~~Add a parameter `-RemoveIllegalChar` to optionally remove illegal NTFS characters `"/ ? < > \ : * | "`~~
   - Done
+- Add support for searching by title instead of only URI
