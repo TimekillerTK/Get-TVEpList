@@ -15,9 +15,6 @@ function Get-TVEpList {
     .PARAMETER REGEX
     This regex pattern will be searched for within the URI provided
 
-    .PARAMETER REMOVEILLEGALCHAR
-    Removes NTFS illegal characters / ? < > \ : * | "
-
     .EXAMPLE
     Get-TVEpList -URI https://www.themoviedb.org/tv/314-star-trek-enterprise/season/1 
     
@@ -27,11 +24,6 @@ function Get-TVEpList {
     Get-TVEpList -URI https://www.themoviedb.org/tv/314-star-trek-enterprise/season/1 -Regex "Spaghetti"
     
     This example uses a custom regex instead of the default "Season "
-
-    .EXAMPLE
-    Get-TVEpList -URI https://www.themoviedb.org/tv/314-star-trek-enterprise/season/1 -RemoveIllegalChar
-
-    Will automatically remove NTFS illegal characters from the episode titles: / ? < > \ : * | "
 
     .INPUTS
     String
@@ -52,10 +44,8 @@ function Get-TVEpList {
         [string[]]$URIs,
 
         [Parameter()]
-        [string]$Regex = "Season ",
+        [string]$Regex = "Season "
 
-        [Parameter()]
-        [switch]$RemoveIllegalChar
     )
     PROCESS {
 
@@ -81,17 +71,6 @@ function Get-TVEpList {
                 
                 # converts the object 
                 $temp = $item | ConvertFrom-String -TemplateContent $template
-    
-                If($PSBoundParameters.ContainsKey('RemoveIllegalChar')) {
-                    
-                    # NTFS illegal characters for filenames, regex format
-                    $illegalchar = "\'", "\""", "\/", "\?", "\<", "\>", "\\", "\:", "\*", "\|" 
-    
-                    # Loop that goes over each illegal character
-                    foreach ($item in $illegalchar) {
-                        $temp.EpTitle = $temp.EpTitle -replace $item,""            
-                    } #foreach
-                } #if
                 
                 # add an object to the arraylist
                 $arraylist.Add($temp) | Out-Null
