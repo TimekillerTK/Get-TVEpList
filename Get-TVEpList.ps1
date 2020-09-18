@@ -50,6 +50,7 @@ function Get-TVEpList {
     PROCESS {
 
         # Create an empty arraylist object
+        # This is suboptimal, optimize it LATER
         $arraylist = New-Object -TypeName "System.Collections.ArrayList"
         $arraylist.Clear()
             
@@ -62,11 +63,14 @@ function Get-TVEpList {
             $rawtitles = (($fetch.links).title | Where-Object { $_ -match $Regex }) | Select-Object -Unique
     
 
+
             # Template for ConvertFrom-String, doesn't work perfectly in all cases, needs to be looked at.
             $template = ("{ShowTitle*:Example Title}: Season {[int]Season:1} ({[int]Date:1988}): Episode {[int]Episode:1} - {EpTitle:Spaghetti Code?}`r`n" +
                         "{ShowTitle*:Another Example Title}: Season {[int]Season:17} ({[int]Date:2004}): Episode {[int]Episode:42} - {EpTitle:Wonderful, Spices!!!}`r`n" +
                         "{ShowTitle*:SomeThing}: Season {[int]Season:47} ({[int]Date:1950}): Episode {[int]Episode:142} - {EpTitle:nothing}")
     
+
+
             foreach($item in $rawtitles) {
                 
                 # converts the object 
@@ -76,6 +80,39 @@ function Get-TVEpList {
                 $arraylist.Add($temp) | Out-Null
     
             } #foreach
+
+            # This sets the maximum number of episodes, which will be important for the switch below
+            $EpCount = $rawtitles.Count
+
+            # This is where the switch should be, but it needs to be refactored to work properly
+            # switch ($EpCount) {
+
+            #     { ($_ -ge 10) -and ($_ -le 99) } { 
+        
+            #         Write-Output "$i is between 10-99"
+            #         if ($i -lt 10){
+            #             $en = "0$($InputObject[$i].Episode)"
+            #         } else {
+            #             $en = $($InputObject[$i].Episode)
+            #         }
+        
+            #     }
+        
+            #     { ($_ -ge 100) -and ($_ -le 999) } { 
+        
+            #         Write-Output "$i is between 100-999"
+            #         if ($i -lt 10){
+            #             $en = "00$($InputObject[$i].Episode)"
+            #         } elseif (($i -ge 10) -and ($i -lt 100)){
+            #             $en = "0$($InputObject[$i].Episode)"
+            #         } else {
+            #             $en = $($InputObject[$i].Episode)
+            #         }
+            #         Write-Output "$en --- final value"
+        
+            #     }
+            #     Default {Write-Output "TOTAL EPISODES IS BIGGER THAN GOD"}
+            # } #switch
 
         } #foreach
 
