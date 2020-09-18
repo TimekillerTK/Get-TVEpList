@@ -36,7 +36,7 @@ function Get-TVEpList {
     Website: https://github.com/TimekillerTK
 #>
 
-    #CmdletBinding turns the function into an advanced function with
+    #CmdletBinding turns the function into an advanced function
     [CmdletBinding()]
     param (
 
@@ -75,44 +75,49 @@ function Get-TVEpList {
                 
                 # converts the object 
                 $temp = $item | ConvertFrom-String -TemplateContent $template
+
+                # This is where the switch should be, but it needs to be refactored to work properly
+                switch ($rawtitles.Count) {
+
+                    # Checks total show epcount is between 10-99
+                    { ($_ -ge 10) -and ($_ -le 99) } { 
+            
+                        #Write-Output "$temp.Episode is between 10-99"
+                        if ($temp.Episode -lt 10){
+                            $en = "0$($temp.Episode)"
+                        } else {
+                            $en = "$($temp.Episode)"
+                        }
+            
+                    }
+            
+                    # Checks total show epcount is between 100-999
+                    { ($_ -ge 100) -and ($_ -le 999) } { 
+            
+                        #Write-Output "$temp.Episode is between 100-999"
+                        if ($temp.Episode -lt 10){
+                            $en = "00$($temp.Episode)"
+                        } elseif (($temp.Episode -ge 10) -and ($temp.Episode -lt 100)){
+                            $en = "0$($temp.Episode)"
+                        } else {
+                            $en = "$($temp.Episode)"
+                        }
+                        
+            
+                    }
+                    Default {Write-Output "TOTAL EPISODES IS BIGGER THAN GOD"}
+                    
+                } #switch
                 
+                $temp | Add-Member -MemberType NoteProperty `
+                                   -Name 'EpisodeZeroed' `
+                                   -Value $en
+
+
                 # add an object to the arraylist
                 $arraylist.Add($temp) | Out-Null
     
             } #foreach
-
-            # This sets the maximum number of episodes, which will be important for the switch below
-            $EpCount = $rawtitles.Count
-
-            # This is where the switch should be, but it needs to be refactored to work properly
-            # switch ($EpCount) {
-
-            #     { ($_ -ge 10) -and ($_ -le 99) } { 
-        
-            #         Write-Output "$i is between 10-99"
-            #         if ($i -lt 10){
-            #             $en = "0$($InputObject[$i].Episode)"
-            #         } else {
-            #             $en = $($InputObject[$i].Episode)
-            #         }
-        
-            #     }
-        
-            #     { ($_ -ge 100) -and ($_ -le 999) } { 
-        
-            #         Write-Output "$i is between 100-999"
-            #         if ($i -lt 10){
-            #             $en = "00$($InputObject[$i].Episode)"
-            #         } elseif (($i -ge 10) -and ($i -lt 100)){
-            #             $en = "0$($InputObject[$i].Episode)"
-            #         } else {
-            #             $en = $($InputObject[$i].Episode)
-            #         }
-            #         Write-Output "$en --- final value"
-        
-            #     }
-            #     Default {Write-Output "TOTAL EPISODES IS BIGGER THAN GOD"}
-            # } #switch
 
         } #foreach
 
