@@ -7,10 +7,10 @@ function Get-TVEpList {
     This tool will fetch individual episode titles from https://www.themoviedb.org
 
     .DESCRIPTION
-    Tool for fetching individual episodes from https://www.themoviedb.org
+    Tool for fetching individual episodes from https://www.themoviedb.org. Does not currently work with other websites.
 
     .PARAMETER URI
-    Should be a URI pointing to an individual season of a specific show, like for example: https://www.themoviedb.org/tv/314-star-trek-enterprise/season/1
+    Should be a URI pointing to an individual season of a specific show, like for example: https://www.themoviedb.org/tv/314-star-trek-enterprise/season/1. Can include more than one URI.
 
     .PARAMETER REGEX
     This regex pattern will be searched for within the URI provided
@@ -62,8 +62,6 @@ function Get-TVEpList {
             # Selects the relevant links, obviously works only with TV shows, not movies
             $rawtitles = (($fetch.links).title | Where-Object { $_ -match $Regex }) | Select-Object -Unique
     
-
-
             # Template for ConvertFrom-String, doesn't work perfectly in all cases, needs to be looked at.
             $template = ("{ShowTitle*:Example Title}: Season {[int]Season:1} ({[int]Date:1988}): Episode {[int]Episode:1} - {EpTitle:Spaghetti Code?}`r`n" +
                         "{ShowTitle*:Another Example Title}: Season {[int]Season:17} ({[int]Date:2004}): Episode {[int]Episode:42} - {EpTitle:Wonderful, Spices!!!}`r`n" +
@@ -76,39 +74,15 @@ function Get-TVEpList {
                 # converts the object 
                 $temp = $item | ConvertFrom-String -TemplateContent $template
 
-                # This is where the switch should be, but it needs to be refactored to work properly
-                switch ($rawtitles.Count) {
-
-                    # Checks total show epcount is between 10-99
-                    { ($_ -ge 10) -and ($_ -le 99) } { 
-            
-                        #Write-Output "$temp.Episode is between 10-99"
-                        if ($temp.Episode -lt 10){
-                            $en = "0$($temp.Episode)"
-                        } else {
-                            $en = "$($temp.Episode)"
-                        }
-            
-                    }
-            
-                    # Checks total show epcount is between 100-999
-                    { ($_ -ge 100) -and ($_ -le 999) } { 
-            
-                        #Write-Output "$temp.Episode is between 100-999"
-                        if ($temp.Episode -lt 10){
-                            $en = "00$($temp.Episode)"
-                        } elseif (($temp.Episode -ge 10) -and ($temp.Episode -lt 100)){
-                            $en = "0$($temp.Episode)"
-                        } else {
-                            $en = "$($temp.Episode)"
-                        }
-                        
-            
-                    }
-                    Default {Write-Output "TOTAL EPISODES IS BIGGER THAN GOD"}
-                    
-                } #switch
+                # Setting the number of episodes as a string, for the next operation
+                $str = [string]($rawtitles.count) 
                 
+                # Replaced complicated switch with a simple trick with String.PadLeft
+                # This first sets the current episode to a string
+                # Then once that is done, it pads left with zeroes until the length is equal to $str.length
+                $en = ([string]$temp.Episode).PadLeft($str.length,'0')
+
+                # Adds the EpisodeZeroed property to the object
                 $temp | Add-Member -MemberType NoteProperty `
                                    -Name 'EpisodeZeroed' `
                                    -Value $en
